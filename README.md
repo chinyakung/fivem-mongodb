@@ -19,6 +19,8 @@ start mongodb
 Every callback accepts `success<boolean>` as its first argument. If `success` is `false`, second argument contains error message.
 
 Example (Lua):
+
+#FindOne
 ```lua
 exports.mongodb:findOne({ collection = "users", query = { _id = id } }, function (success, result)
     if not success then
@@ -79,8 +81,6 @@ exports.mongodb:find({
     end
 end)
 ```
-
-
 
 #CreateIndex
 ```lua
