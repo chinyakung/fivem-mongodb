@@ -30,6 +30,70 @@ exports.mongodb:findOne({ collection = "users", query = { _id = id } }, function
 end)
 ```
 
+#Aggregate
+```lua
+    -- how to use 
+exports.mongodb:aggregate({ 
+	collection = "users",
+	pipeline = {
+		[1] = { ["$match"] = { identifier = "steam:xxxxxxxxxxxxxxx" } },
+		[2] = { ["$project"] = { playerName =  1  } } ,
+		[3] = { ["$limit"] = 1 }
+	}
+}, function (success,result)
+	if not success then
+		print("Error message: "..tostring(result))
+	else
+	  for _, user in pairs(result) do
+		for key, value in pairs(user) do
+			print(key, " : " , value)
+		end
+		print("-------")
+	  end
+	end
+end)
+```
+
+#Find
+```lua
+exports.mongodb:find({
+    collection = "phone_message",
+    query = {
+        transmitter = "",
+        receiver = ""
+    },
+    limit = 100,
+    sort = {
+        time = -1
+    }
+}, function (success, result)
+    if not success then
+        return
+    end
+
+    print("\n** 100 message lastest")
+    for i, document in ipairs(result) do
+        for k, v in pairs(document) do
+            print("* "..tostring(k).." = \""..tostring(v).."\"")
+        end
+    end
+end)
+```
+
+
+
+#CreateIndex
+```lua
+AddEventHandler("onDatabaseConnect", function (databaseName)
+	exports.mongodb:createIndex({
+		collectionName = "esx_status",
+		keys = { ["identifier"] = 1},
+		options= { ["unique"] = true , ["name"] = "identifier" }
+	})
+end)
+```
+
+
 ## exports.mongodb.isConnected
 * Returns boolean
 
