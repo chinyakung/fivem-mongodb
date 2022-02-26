@@ -89,3 +89,10 @@ AddEventHandler("onDatabaseConnect", function (databaseName)
         end
     end)
 end)
+
+exports.mongodb:deleteOne({ collection="users", query = { username = username } }, function (success, result)
+    if not success then
+        print("[MongoDB]Error in deleteOne: "..tostring(result))
+        return
+    end
+end)
