@@ -93,6 +93,7 @@ function dbFind(params, callback) {
     const options = utils.safeObjectArgument(params.options);
 
     let cursor = collection.find(query, options);
+    if (params.sort) cursor = cursor.sort(params.sort);
     if (params.limit) cursor = cursor.limit(params.limit);
     cursor.toArray((err, documents) => {
         if (err) {
@@ -190,9 +191,70 @@ function dbDelete(params, callback, isDeleteOne) {
     process._tickCallback();
 }
 
+
+/**
+ * MongoDB createIndex method
+ * @param {Object} params - Params object
+ */
+function createIndex(params){
+    if (!checkParams(params)) return console.log(`[MongoDB][ERROR] exports.createIndex: Invalid params object.`);
+    if (!checkDatabaseReady()) return;
+    if (!params.options.name) {
+        console.log(`[MongoDB][ERROR] exports.createIndex: params.options.name is required`);
+        console.log(params);
+        console.log("================================");
+        return
+    }
+    db.collection(params.collectionName).indexExists(params.options.name,function(err,exist){
+        if (err) {
+            return console.log(`[MongoDB][ERROR] exports.createIndex: got error` ,`${err}`);
+        }
+        if (!exist) {
+            db.collection(params.collectionName).createIndex(params.keys,params.options)
+        }
+    })
+}
+
+
+
+/**
+ * MongoDB aggregate method
+ * @param {Object} params - Params object
+ * @param {Object} params.pipeline - Pipeline object.
+ * @param {Object} params.options .
+ */
+function dbAggregate(params, callback) {
+    if (!checkDatabaseReady()) return;
+    if (!checkParams(params)) return console.log(`[MongoDB][ERROR] exports.aggregate: Invalid params object.`);
+
+    let collection = getParamsCollection(params);
+    if (!collection) return console.log(`[MongoDB][ERROR] exports.aggregate: Invalid collection "${params.collection}"`);
+
+    
+
+    const options = utils.safeObjectArgument(params.options);
+    const pipeline = Array.isArray(params.pipeline) ? params.pipeline : [params.pipeline]
+
+    let cursor = collection.aggregate(pipeline, options);
+    cursor.toArray((err, documents) => {
+        if (err) {
+            console.log(`[MongoDB][ERROR] exports.aggregate: Error "${err.message}".`);
+            utils.safeCallback(callback, false, err.message);
+            return;
+        };
+        utils.safeCallback(callback, true, utils.exportDocuments(documents));
+    });
+    process._tickCallback();
+}
+
+
+
 /* Exports definitions */
 
 exports("isConnected", () => !!db);
+
+exports("createIndex",createIndex)
+exports("aggregate",dbAggregate)
 
 exports("insert", dbInsert);
 exports("insertOne", (params, callback) => {
@@ -215,7 +277,6 @@ exports("updateOne", (params, callback) => {
 });
 
 exports("count", dbCount);
-
 exports("delete", dbDelete);
 exports("deleteOne", (params, callback) => {
     return dbDelete(params, callback, true);
